@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Game</title>
+    <link rel = "stylesheet" type = "text/css" href = "client/style.css"/>
+</head>
+<body>
+    <script src = "https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src = "client/Init/imageLoader.js"></script>
+    <script src = "client/Game/util.js"></script>
+    <script src = "client/Init/init.js"></script>
+    <script src = "client/Game/projectiles.js"></script>
+    <script src = "client/Game/util.js"></script>
+    <script src = "client/Game/tile.js"></script>
+
+    <script src = "client/Init/worldCreator.js"></script>
+
+
+    <script src = "client/Game/Enemy.js"></script>
+    <script src = "client/Game/EnemySpawner.js"></script>
+    <script src = "client/Game/player.js"></script>
+    <script src = "client/Game/collisions.js"></script>
+
+    <script src = "client/UI/keys.js"></script>
+    <script src = "client/game.js"></script>
+    <script src = "client/UI/interface.js"></script>
+    <script>
+        context.fillStyle = 'rgb(29, 29, 29)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(loadingIMG, canvas.width/3, canvas.height/3, canvas.width/3, canvas.height/3);
+        var playerList = [];
+        var socket = { emit: function(){ return "this prevents socket from being null during connection timeout" }};
+        // wait half a second before connecting to prevent rapid refreshes from creating more players than deleting
+        window.setTimeout(function() {
+            socket = io();
+            // when first connecting to server
+            socket.on('connected', function (id) {
+                // set id to connection id
+                console.log('connected with id ' + id);
+                player.id = id;
+
+                // send player stats to server
+                socket.emit('updatePlayer', {
+                    id: player.id,
+                    position: player.position,
+                    state: player.state,
+                    xFrame: player.xFrame,
+                    direction: player.direction
+                });
+            });
+
+            // receiving list of all players from server
+            socket.on('playerList', function (list) {
+                playerList = list;
+            });
+
+
+            // START GAME LOOP
+            // run main 30 times per second
+            setInterval(function(){
+                update();
+                render();
+            }, 1000/60);
+            // display fps (and reset) every second
+            setInterval(function(){
+                game.fps = game.frameCount;
+                game.frameCount = 0;
+            }, 1000);
+
+        }, 500);
+    </script>
+
+</body>
+</html>
